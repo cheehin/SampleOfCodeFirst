@@ -1,0 +1,178 @@
+﻿@{
+    ViewData["Title"] = "Db Quotation";
+}
+    <div class="form-group">
+        <h2>Here is the page for DbQuotation</h2>
+        <div class="row">
+            <div class="col">
+                <label>SupplierId: </label><input type="text" id="SupplierId" class="form-control" /><br />
+            </div>
+            <div class="col">
+                <label>Product: </label><input type="text" id="Product" class="form-control" /><br />
+            </div>
+            <div class="col">
+                <label>CostPerUnit: </label><input type="text" id="CostPerUnit" class="form-control" /><br />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <button id="AddNew" class="btn btn-primary">Add New</button>
+            </div>
+            <div class="col">
+                <button id="butAdd" class="btn btn-primary"> Add Default data</button><br />
+            </div>
+            <div class="col">
+                <button id="Update" class="btn btn-primary">Update</button><br />
+            </div>
+            <div class="col">
+                <button id="Export" class="btn btn-primary">button to export CSV</button>
+            </div>
+        </div>
+    </div>
+
+<div class="text-center">
+
+    <h3>Data</h3>
+    <table id="dtTable" class="table table-striped table-bordered dt-responsive nowrap">
+        <thead>
+            <tr>
+                <th>SupplierId</th>
+                <th>Product</th>
+                <th>CostPerUnit</th> 
+                <th>Delete</th>
+            </tr>
+        </thead>
+    </table>
+    <label>button to export CSV</label>
+</div>
+@section Scripts{
+    <script type="text/javascript">
+        var dataId;
+        $(document).ready(function () {
+
+            const table= $('#dtTable').DataTable({
+                'processing': true,
+                'serverSide':true,
+                'dom': '<"top"i>rt<"bottom"flp><"clear">',
+                'ajax': {
+                    url: '@Url.Action("GetDbQuotation","DbQuo")',
+                    type:'POST',
+                    datatype:'json'
+                },
+                'columns': [
+                    {
+                        data: 'SupplierId',
+                        render: function (data, type, full) {
+                            return full['supplierId'];
+                        }
+                    },
+                    {
+                        data: 'Product',
+                        render: function (data, type, full) {
+                            return full['product'];
+                        }
+                    },
+                    {
+                        data: 'CostPerUnit',
+                        render: function (data, type, full) {
+                            return full['costPerUnit'];
+                        }
+                    },
+                    {
+                        data: 'Delete',
+                        orderable: false,
+                        render: function (data, type, full) {
+                            return '<div class="btn-group"><button type="button" id="' + full['supplierId'] + '" onclick="rowDataDelete(\'' + full['supplierId'] + ',' + full['product'] + '\')" class="btn btn - light">Delete</button></div>';
+                        
+                        }
+                    }
+                ]
+            });
+
+            $('#dtTable tbody').on('click', 'tr', function () {
+                let data = table.row(this).data();
+                $('#SupplierId').val(data.supplierId);
+                dataId = data.supplierId;
+                $('#Product').val(data.product);
+                $('#CostPerUnit').val(data.costPerUnit);
+
+            });
+
+
+        });
+
+        $('#Update').click(function () {
+            $.ajax({
+                url: '@Url.Action("UpdateData","DbQuo")',
+                Type: 'POST',
+                data: {
+                    SupplierId: dataId,
+                    Product: $('#Product').val(),
+                    CostPerUnit: $('#CostPerUnit').val()
+                },
+                success: function () {
+                    $('#dtTable').DataTable().ajax.reload();
+                }
+            });
+        });
+
+        function rowDataDelete(e){
+            var splitStr = e.split(',');
+            $.ajax({
+                url: '@Url.Action("DeleteData","DbQuo")',
+                Type: 'POST',
+                data: {
+                    SupplierId: splitStr[0],
+                    Product: splitStr[1]
+                },
+                success: function () {
+                    window.alert('Successful Delete');
+                    $('#dtTable').DataTable().ajax.reload();
+
+                }
+            });
+        }
+
+        $('#butAdd').click(function () {
+            $.ajax({
+                url: '@Url.Action("AddDefaultData","DBQuo")',
+                type: 'POST',
+                success: function () {
+                    window.alert('Done');
+                    $('#dtTable').DataTable().ajax.reload();
+                }
+            });
+        });
+
+        
+        $('#AddNew').click(function () {
+            $.ajax({
+                url: '@Url.Action("AddNew","DBQuo")',
+                type:'POST',
+                data: {
+                    SupplierId: $('#SupplierId').val(),
+                    Product: $('#Product').val(),
+                    CostPerUnit: $('#CostPerUnit').val()
+                },
+                success: function () {
+                    window.alert('Done');
+                    $('#dtTable').DataTable().ajax.reload();
+                }
+            });
+        });
+
+        $('#Export').click(function () {
+            var fileName = "Data.csv";
+            $.ajax({
+                url:'@Url.Action("DownloadFile","DBQuo")',
+                type:'POST',
+                contentType:"application/json;charset=utf-8",
+                dataType:"text",
+                success: function (r) {
+                    window.location = '@Url.Action("DownloadFile","DBQuo")';
+                }
+            });
+             
+        });
+    </script>
+}

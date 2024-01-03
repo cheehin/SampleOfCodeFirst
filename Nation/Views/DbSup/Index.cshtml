@@ -1,0 +1,205 @@
+﻿@{
+    ViewData["Title"] = "Db Supplier";
+}
+    <div class="form-group">
+        <h2>Here is the page for DbSupplier</h2>
+        <div class="row">
+            <div class="col">
+                <label>Name: </label>&nbsp<input type="text" id="Name" class="form-control" /><br />
+            </div>
+            <div class="col">
+                <label>Email: </label>&nbsp<input type="email" id="Email" class="form-control" /><br />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <label>CountryCode: </label>&nbsp<input type="text" maxlength="2" id="CountryCode" class="form-control" /><br />
+            </div>
+            <div class="col">
+                <label>DateCreated: </label>&nbsp<input type="date" id="DateCreated" class="form-control" /><br />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <button id="AddNew" class="btn btn-primary">Add New</button>
+            </div>
+            <div class="col">
+                <button id="Update" class="btn btn-primary">Update</button>
+            </div>
+            <div class="col">
+                <button id="butAdd" class="btn btn-primary"> Add Default data</button><br />
+            </div>
+            <div class="col">
+                <button id="Export" class="btn btn-primary">Export to CSV</button>
+            </div>
+        </div>
+        
+        
+    </div>
+
+<div class="text-center">
+    
+    
+    <h3>Data</h3>
+    <table id="dtTable" class="table table-striped table-bordered dt-responsive nowrap">
+        <thead>
+            <tr> 
+            <th>Id</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>CountryCode</th>
+            <th>DateCreated</th>
+            <th>Delete</th>
+            </tr>
+        </thead>
+    </table>
+    <label>button to export CSV</label>
+</div>
+@section Scripts{
+    <script type="text/javascript">
+        var id=0;
+        $(document).ready(function () {
+
+            const table= $('#dtTable').DataTable({
+                'processing': true,
+                'serverSide':true,
+                'dom': '<"top"i>rt<"bottom"flp><"clear">',
+                'ajax': {
+                    url: '@Url.Action("GetDbSupplier","DbSup")',
+                    type:'POST',
+                    datatype:'json'
+                },
+                'columns': [
+                    {
+                        data:'Id',
+                        render: function (data, type, full) {
+                            return full['id'];
+                        }
+                    },
+                    {
+                        data: 'Name',
+                        render: function (data, type, full) {
+                            return full['name'];
+                        }
+                    },
+                    {
+                        data: 'Email',
+                        render: function (data, type, full) {
+                            return full['email'];
+                        }
+                    },
+                    {
+                        data: 'CountryCode',
+                        render: function (data, type, full) {
+                            if (full['countryCode'] == 'GB')
+                                return 'United Kingdom';
+                            else
+                                return 'Japan';
+                        }
+                    },
+                    {
+                        data: 'DateCreated',
+                        render: function (data, type, full) {
+                            return full['dateCreated'];
+                        }
+                    },
+                    {
+                        data: 'Delete',
+                        orderable: false,
+                        render: function (data, type, full) {
+                            return '<div class="btn-group"><button type="button" id="' + full['id'] + '" onclick="rowDataDelete(this.id)" class="btn btn-light">Delete</button></div>';
+                        
+                        }
+                    }
+                ]
+            });
+
+            $('#dtTable tbody').on('click', 'tr', function () {
+                let data = table.row(this).data();
+                var dataDate = data.dateCreated.split('T')[0];
+                id = data.id;
+                $('#Name').val(data.name);
+                $('#Email').val(data.email);
+                $('#CountryCode').val(data.countryCode); 
+                $('#DateCreated').val(dataDate);
+
+            });
+
+
+        });
+
+        $('#Update').click(function () {
+            $.ajax({
+                url: '@Url.Action("UpdateData","DbSup")',
+                Type: 'POST',
+                data: {
+                    Id: id,
+                    Name: $('#Name').val(),
+                    Email: $('#Email').val(),
+                    CountryCOde: $('#CountryCode').val(),
+                    DateCreated: $('#DateCreated').val()
+                },
+                success: function () {
+                    window.alert('Successful Update');
+                    $('#dtTable').DataTable().ajax.reload();
+
+                }
+            });
+        });
+
+        function rowDataDelete(e){
+            $.ajax({
+                url:'@Url.Action("DeleteData","DbSup")',
+                Type: 'POST',
+                data: {
+                    id: e
+                },
+                success: function(){
+                    window.alert('Successful Delete');
+                    $('#dtTable').DataTable().ajax.reload();
+
+                }
+            })
+        }
+
+        $('#butAdd').click(function () {
+            $.ajax({
+                url: '@Url.Action("AddDefaultData","DbSup")',
+                type: 'POST',
+                success: function () {
+                    window.alert('Done');
+                    $('#dtTable').DataTable().ajax.reload();
+                }
+            });
+        });
+
+        
+        $('#AddNew').click(function () {
+            $.ajax({
+                url: '@Url.Action("AddNew","DBSup")',
+                type:'POST',
+                data: {
+                    Name: $('#Name').val(),
+                    Email: $('#Email').val(),
+                    CountryCOde:$('#CountryCode').val(),
+                    DateCreated:$('#DateCreated').val()
+
+                }
+            });
+        });
+
+        $('#Export').click(function () {
+            var fileName = "Data.csv";
+            $.ajax({
+                url: '@Url.Action("DownloadFile","DBSup")',
+                type: 'POST',
+                contentType: "application/json;charset=utf-8",
+                dataType: "text",
+                success: function (r) {
+                    window.location = '@Url.Action("DownloadFile","DBSup")';
+                }
+            });
+
+        });
+    </script>
+}
